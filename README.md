@@ -83,14 +83,6 @@ python RePKG-GUI.py
 ![在编辑器打开](assets/images/Tutorial-06.png)
 
 > 其余实用功能请配合界面提示自行探索！
-
----
-
-## 📜 开源协议 | License
-
-本项目遵循 [MIT License](./LICENSE)。  
-欢迎自由使用、修改及分发。
-
 ---
 
 ## 💬 致谢 | Acknowledgements
