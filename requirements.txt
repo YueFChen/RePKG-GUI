@@ -1,0 +1,4 @@
+Flask>=3.0.0
+Werkzeug>=3.0.0
+pywebview>=5.0.0
+pyinstaller>=6.0.0

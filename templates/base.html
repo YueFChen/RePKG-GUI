@@ -1,0 +1,587 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}RePKG-GUI{% endblock %}</title>
+
+    <!-- Favicon -->
+    <link rel="icon" href="{{ url_for('static', filename='assets/images/icon.ico') }}" type="image/x-icon">
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Alpine.js -->
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/custom.css') }}">
+
+    {% block extra_head %}{% endblock %}
+</head>
+<body class="min-h-screen bg-gray-950">
+
+    <div x-data="repkgApp()" x-init="init()" class="relative">
+
+        <!-- 背景层 -->
+        <div class="app-bg-layer"
+             :style="backgroundSrc ? `background-image: url(${backgroundSrc}); opacity: ${Number(config.appearance.backgroundOpacity)}; filter: blur(${Number(config.appearance.backgroundBlur)}px)` : ''"></div>
+
+        <div class="flex h-screen overflow-hidden relative z-10">
+
+        <!-- 左侧边栏 - 路径配置 -->
+        <aside class="w-80 glass-panel glass-border flex flex-col z-40">
+
+            <!-- Logo 区域 -->
+            <div class="p-6 border-b border-white/10">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-xl flex items-center justify-center overflow-hidden">
+                        <img src="{{ url_for('static', filename='assets/images/icon.ico') }}" 
+                             alt="RePKG-GUI" 
+                             class="w-full h-full object-contain">
+                    </div>
+                    <div class="flex-1">
+                        <h1 class="font-bold text-white text-base">RePKG-GUI</h1>
+                        <p class="text-xs text-gray-400">Wallpaper Engine 提取工具</p>
+                    </div>
+                    <!-- 设置按钮 -->
+                    <a href="/settings" 
+                       class="w-9 h-9 glass-button rounded-xl flex items-center justify-center hover:text-white"
+                       title="设置">
+                        <i class="fas fa-cog text-gray-400 hover:text-white"></i>
+                    </a>
+                </div>
+            </div>
+
+            <!-- 路径配置 -->
+            <div class="flex-1 p-6 space-y-6 overflow-y-auto">
+
+                <!-- 隐藏的目录选择器 -->
+                <input type="file" id="dirPicker" webkitdirectory multiple style="display: none;" @change="handleDirSelect">
+                <!-- 隐藏的背景图片选择器 -->
+                <input type="file" id="bgImagePicker" accept="image/*" style="display: none;" @change="handleBgImageSelect">
+
+                <!-- 输入目录 -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-300 mb-2">
+                        <i class="fas fa-folder-open mr-2 text-blue-400"></i>
+                        输入目录
+                    </label>
+                    <div class="flex gap-2">
+                        <input type="text" x-model="config.inputPath"
+                               @change="scanFiles"
+                               class="glass-input flex-1 px-4 py-2.5 rounded-xl text-white placeholder-gray-500"
+                               placeholder="选择 .pkg 文件目录">
+                        <button @click="browseDirectory('input')"
+                                class="glass-button px-4 py-2.5 rounded-xl text-gray-300 hover:text-white">
+                            <i class="fas fa-folder-open"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- 输出目录 -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-300 mb-2">
+                        <i class="fas fa-download mr-2 text-green-400"></i>
+                        输出目录
+                    </label>
+                    <div class="flex gap-2">
+                        <input type="text" x-model="config.outputPath"
+                               class="glass-input flex-1 px-4 py-2.5 rounded-xl text-white placeholder-gray-500"
+                               placeholder="提取结果保存位置">
+                        <button @click="browseDirectory('output')"
+                                class="glass-button px-4 py-2.5 rounded-xl text-gray-300 hover:text-white">
+                            <i class="fas fa-download"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- 分隔线 -->
+                <div x-show="activeView === 'input'" class="border-t border-white/10"></div>
+                <!-- 提取选项 -->
+                <div x-show="activeView === 'input'">
+                    <h3 class="text-sm font-medium text-gray-300 mb-4">
+                        <i class="fas fa-sliders-h mr-2 text-purple-400"></i>
+                        提取选项
+                    </h3>
+                    <div class="space-y-3">
+                        <label class="glass-checkbox flex items-center gap-3 cursor-pointer p-3 rounded-xl">
+                            <input type="checkbox" x-model="config.options.convertTex" class="hidden">
+                            <div class="w-5 h-5 rounded border border-white/20 flex items-center justify-center"
+                                 :class="config.options.convertTex ? 'bg-blue-500 border-blue-500' : 'bg-transparent'">
+                                <i x-show="config.options.convertTex" class="fas fa-check text-white text-xs"></i>
+                            </div>
+                            <span class="text-sm text-gray-300">转换 TEX</span>
+                        </label>
+
+                        <label class="glass-checkbox flex items-center gap-3 cursor-pointer p-3 rounded-xl">
+                            <input type="checkbox" x-model="config.options.copyProject" class="hidden">
+                            <div class="w-5 h-5 rounded border border-white/20 flex items-center justify-center"
+                                 :class="config.options.copyProject ? 'bg-blue-500 border-blue-500' : 'bg-transparent'">
+                                <i x-show="config.options.copyProject" class="fas fa-check text-white text-xs"></i>
+                            </div>
+                            <span class="text-sm text-gray-300">复制项目文件</span>
+                        </label>
+
+                        <label class="glass-checkbox flex items-center gap-3 cursor-pointer p-3 rounded-xl">
+                            <input type="checkbox" x-model="config.options.recursive" class="hidden">
+                            <div class="w-5 h-5 rounded border border-white/20 flex items-center justify-center"
+                                 :class="config.options.recursive ? 'bg-blue-500 border-blue-500' : 'bg-transparent'">
+                                <i x-show="config.options.recursive" class="fas fa-check text-white text-xs"></i>
+                            </div>
+                            <span class="text-sm text-gray-300">递归搜索</span>
+                        </label>
+
+                        <label class="glass-checkbox flex items-center gap-3 cursor-pointer p-3 rounded-xl">
+                            <input type="checkbox" x-model="config.options.overwrite" class="hidden">
+                            <div class="w-5 h-5 rounded border border-white/20 flex items-center justify-center"
+                                 :class="config.options.overwrite ? 'bg-blue-500 border-blue-500' : 'bg-transparent'">
+                                <i x-show="config.options.overwrite" class="fas fa-check text-white text-xs"></i>
+                            </div>
+                            <span class="text-sm text-gray-300">覆盖现有文件</span>
+                        </label>
+
+                        <label class="glass-checkbox flex items-center gap-3 cursor-pointer p-3 rounded-xl">
+                            <input type="checkbox" x-model="config.options.copyPreview" class="hidden">
+                            <div class="w-5 h-5 rounded border border-white/20 flex items-center justify-center"
+                                 :class="config.options.copyPreview ? 'bg-blue-500 border-blue-500' : 'bg-transparent'">
+                                <i x-show="config.options.copyPreview" class="fas fa-check text-white text-xs"></i>
+                            </div>
+                            <span class="text-sm text-gray-300">拷贝预览图</span>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- 分隔线 -->
+                <div class="border-t border-white/10"></div>
+
+                <!-- 统计信息 -->
+                <div class="glass-card p-4 rounded-xl">
+                    <div class="flex items-center justify-between">
+                        <span class="text-sm text-gray-400" x-text="activeView === 'output' ? '输出项目' : '发现项目'"></span>
+                        <span class="text-lg font-bold text-white" x-text="currentFiles.length"></span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 操作按钮 -->
+            <div x-show="activeView === 'input'" class="p-6 border-t border-white/10 space-y-3">
+                <button @click="startExtract"
+                        :disabled="isRunning || !canExtract"
+                        :class="{'opacity-50 cursor-not-allowed': isRunning || !canExtract}"
+                        class="w-full py-3 glass-button-primary rounded-xl font-semibold flex items-center justify-center gap-2">
+                    <i :class="isRunning ? 'fa-spinner animate-spin' : 'fa-play'" class="fas"></i>
+                    <span x-text="isRunning ? '处理中...' : '开始提取'"></span>
+                </button>
+
+                <button x-show="isRunning" @click="stopExtract"
+                        class="w-full py-3 glass-button-danger rounded-xl font-semibold flex items-center justify-center gap-2">
+                    <i class="fas fa-stop"></i>
+                    停止任务
+                </button>
+            </div>
+
+            <!-- 输出视图提示 -->
+            <div x-show="activeView === 'output'" class="p-6 border-t border-white/10">
+                <div class="glass-card rounded-xl p-4 text-center">
+                    <i class="fas fa-shield-alt text-green-400/50 text-xl mb-2 block"></i>
+                    <p class="text-xs text-gray-500">输出目录管理</p>
+                    <p class="text-[10px] text-gray-600 mt-1">选择项目后使用删除功能</p>
+                </div>
+            </div>
+        </aside>
+
+        <!-- 主内容区 -->
+        {% block main_content %}
+        <main class="flex-1 flex flex-col overflow-hidden p-6">
+
+            <!-- 顶部状态栏 -->
+            <header class="glass-panel glass-border rounded-xl p-4 mb-4">
+                <div class="flex items-center justify-between mb-3">
+                    <div class="flex items-center gap-3">
+                        <!-- 视图切换标签 -->
+                        <div class="glass-card rounded-lg p-0.5 flex">
+                            <button @click="switchView('input')"
+                                    class="px-3 py-1.5 rounded-md text-sm font-medium transition-all"
+                                    :class="activeView === 'input'
+                                        ? 'bg-blue-500/20 text-blue-400'
+                                        : 'text-gray-400 hover:text-white'">
+                                <i class="fas fa-download mr-1"></i>输入目录
+                            </button>
+                            <button @click="switchView('output')"
+                                    class="px-3 py-1.5 rounded-md text-sm font-medium transition-all"
+                                    :class="activeView === 'output'
+                                        ? 'bg-blue-500/20 text-blue-400'
+                                        : 'text-gray-400 hover:text-white'">
+                                <i class="fas fa-folder mr-1"></i>输出目录
+                            </button>
+                        </div>
+                        <span x-show="currentFiles.length > 0" class="text-sm text-gray-400">
+                            共 <span x-text="filteredFiles.length"></span>/<span x-text="currentFiles.length"></span> 个项目
+                        </span>
+                    </div>
+                    <div class="flex items-center gap-4">
+                        <button x-show="currentFiles.length > 0"
+                                @click="activeView === 'output' ? refreshOutput() : refreshFiles()"
+                                class="glass-button px-3 py-1.5 rounded-lg flex items-center gap-2 text-sm text-gray-300 hover:text-white"
+                                :disabled="isRunning">
+                            <i class="fas fa-sync-alt" :class="{'animate-spin': isRunning}"></i>
+                            <span>刷新</span>
+                        </button>
+                        <span class="flex items-center gap-2 text-sm">
+                            <i class="fas fa-circle text-green-400 text-xs" :class="{'animate-pulse': isRunning}"></i>
+                            <span class="text-gray-300" x-text="isRunning ? '运行中' : '就绪'"></span>
+                        </span>
+                    </div>
+                </div>
+                <!-- 搜索与筛选 -->
+                <div x-show="currentFiles.length > 0" class="flex items-center gap-3">
+                    <div class="relative flex-1 max-w-xs">
+                        <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 text-xs"></i>
+                        <input type="text"
+                               x-model="searchQuery"
+                               @input="onSearchInput()"
+                               placeholder="搜索名称、标题或ID..."
+                               class="glass-input w-full pl-9 pr-4 py-2 rounded-lg text-white text-sm placeholder-gray-500">
+                    </div>
+                    <div class="flex gap-1">
+                        <template x-for="t in [
+                            {key:'all', icon:'fa-list', label:'全部'},
+                            {key:'scene', icon:'fa-cube', label:'场景'},
+                            {key:'video', icon:'fa-video', label:'视频'},
+                            {key:'web', icon:'fa-code', label:'Web'},
+                            {key:'application', icon:'fa-window-maximize', label:'应用'}
+                        ]" :key="t.key">
+                            <button @click="filterType = t.key"
+                                    class="px-3 py-1.5 rounded-lg text-xs transition-all"
+                                    :class="filterType === t.key
+                                        ? 'bg-blue-500/20 text-blue-400 border border-blue-500/30'
+                                        : 'glass-button text-gray-400 hover:text-white'">
+                                <i :class="'fas ' + t.icon + ' mr-1'"></i>
+                                <span x-text="t.label"></span>
+                            </button>
+                        </template>
+                    </div>
+                </div>
+            </header>
+
+            <!-- 选择操作栏 -->
+            <div x-show="hasSelection" class="glass-panel glass-border rounded-xl p-3 mb-3 flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                    <span class="text-sm" :class="activeView === 'output' ? 'text-red-400' : 'text-blue-400'">
+                        <i class="fas fa-check-square mr-1"></i>
+                        已选 <span x-text="selectedFiles.size" class="font-semibold"></span> 个
+                    </span>
+                    <button @click="selectAll()" class="text-xs text-gray-400 hover:text-white">全选</button>
+                    <button @click="deselectAll()" class="text-xs text-gray-400 hover:text-white">取消</button>
+                </div>
+                <!-- 输入视图：提取 -->
+                <button x-show="activeView === 'input'"
+                        @click="extractSelected()"
+                        class="glass-button px-4 py-1.5 rounded-lg flex items-center gap-2 text-sm text-blue-400 hover:text-blue-300"
+                        :disabled="isRunning">
+                    <i class="fas fa-play"></i>提取选中
+                </button>
+                <!-- 输出视图：删除 -->
+                <button x-show="activeView === 'output'"
+                        @click="deleteSelectedProjects()"
+                        class="glass-button px-4 py-1.5 rounded-lg flex items-center gap-2 text-sm text-red-400 hover:text-red-300"
+                        :disabled="isRunning">
+                    <i class="fas fa-trash"></i>删除选中
+                </button>
+            </div>
+
+            <!-- 项目卡片区域 -->
+            <div class="flex-1 overflow-y-auto">
+                <template x-if="currentFiles.length === 0">
+                    <div class="h-full flex items-center justify-center">
+                        <div class="text-center">
+                            <div class="w-20 h-20 glass-card rounded-2xl flex items-center justify-center mx-auto mb-4">
+                                <i class="fas fa-folder-open text-gray-500 text-3xl"></i>
+                            </div>
+                            <p class="text-gray-400 text-lg" x-text="activeView === 'output' ? '输出目录为空' : '请选择输入目录'"></p>
+                            <p class="text-gray-500 text-sm mt-2" x-text="activeView === 'output' ? '提取后的项目将显示在此处' : '目录中的项目文件将显示在此处'"></p>
+                        </div>
+                    </div>
+                </template>
+
+                <div x-show="currentFiles.length > 0" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3">
+                    <template x-for="file in filteredFiles" :key="file.path">
+                        <div class="glass-card rounded-xl overflow-hidden transition-all duration-200 cursor-pointer group relative"
+                             :class="{'selected shadow-blue-500/20 shadow-lg ring-2 ring-blue-500/40': selectedFiles.has(file.dir_path)}"
+                             @click="file.is_video ? playVideo(file) : openLocation(file.dir_path || file.path)"
+                             @contextmenu.prevent="showContextMenu($event, file)"
+                             :style="file.schemecolor ? 'border-color: rgba(' + (file.schemecolor.split(' ').map((c, i) => i === 3 ? Math.round(parseFloat(c) * 255) : Math.round(parseFloat(c) * 255)).join(',') + '), 0.3)' : ''">
+                            <!-- 预览图片 -->
+                            <div class="relative bg-gradient-to-br from-slate-800 to-slate-900 overflow-hidden aspect-square">
+                                <!-- 预览图片 (所有类型共用) -->
+                                <template x-if="file.preview">
+                                    <img :src="'/api/preview/' + encodeURIComponent(file.preview)"
+                                         class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                                         @error="$el.style.display='none'">
+                                </template>
+                                <!-- 无预览占位 -->
+                                <template x-if="!file.preview">
+                                    <div class="absolute inset-0 flex flex-col items-center justify-center"
+                                         :class="{
+                                             'bg-gradient-to-br from-purple-900/40 to-blue-900/40': file.is_video,
+                                             'bg-gradient-to-br from-green-900/40 to-teal-900/40': file.is_web,
+                                             'bg-gradient-to-br from-blue-900/40 to-indigo-900/40': file.is_scene,
+                                             'bg-gradient-to-br from-yellow-900/40 to-orange-900/40': file.is_application
+                                         }">
+                                        <i class="text-white/20 text-2xl mb-1"
+                                           :class="{
+                                               'fas fa-video': file.is_video,
+                                               'fas fa-code': file.is_web,
+                                               'fas fa-cube': file.is_scene,
+                                               'fas fa-window-maximize': file.is_application
+                                           }"></i>
+                                        <span class="text-white/20 text-[10px]" x-text="file.type"></span>
+                                    </div>
+                                </template>
+
+                                <!-- 视频播放按钮 -->
+                                <div x-show="file.is_video" class="absolute inset-0 flex items-center justify-center bg-black/20 group-hover:bg-black/40 transition-colors">
+                                    <div class="w-10 h-10 rounded-full bg-white/15 backdrop-blur flex items-center justify-center group-hover:scale-110 transition-transform shadow-lg">
+                                        <i class="fas fa-play text-white text-sm ml-0.5"></i>
+                                    </div>
+                                </div>
+
+                                <!-- 顶部覆盖层：类型标识 + 操作按钮（hover 显示） -->
+                                <div class="absolute top-0 left-0 right-0 p-1.5 flex items-start justify-between">
+                                    <!-- 类型图标 -->
+                                    <span class="px-1.5 py-0.5 rounded text-[10px] font-medium backdrop-blur-sm"
+                                          :class="{
+                                              'bg-purple-500/60 text-white': file.is_video,
+                                              'bg-green-500/60 text-white': file.is_web,
+                                              'bg-blue-500/60 text-white': file.is_scene,
+                                              'bg-orange-500/60 text-white': file.is_application
+                                          }">
+                                        <i class="fas mr-0.5"
+                                           :class="{
+                                               'fa-video': file.is_video,
+                                               'fa-code': file.is_web,
+                                               'fa-cube': file.is_scene,
+                                               'fa-window-maximize': file.is_application
+                                           }"></i>
+                                        <span x-text="file.is_video ? '视频' : file.is_web ? 'Web' : file.is_scene ? '场景' : '应用'"></span>
+                                    </span>
+                                    <!-- 操作按钮区 -->
+                                    <div class="flex items-center gap-1">
+                                        <button @click.stop="openLocation(file.dir_path || file.path)"
+                                                class="w-6 h-6 rounded-lg bg-black/40 backdrop-blur flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-white/15"
+                                                title="打开位置">
+                                            <i class="fas fa-folder-open text-white text-[10px]"></i>
+                                        </button>
+                                        <div @click.stop="toggleSelect(file.dir_path)">
+                                            <div class="w-5 h-5 rounded-md flex items-center justify-center transition-all"
+                                                 :class="selectedFiles.has(file.dir_path)
+                                                     ? 'bg-blue-500 shadow-sm shadow-blue-500/30'
+                                                     : 'bg-black/40 border border-white/25 opacity-0 group-hover:opacity-100'">
+                                                <i x-show="selectedFiles.has(file.dir_path)" class="fas fa-check text-white text-[10px]"></i>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- 内容区域 -->
+                            <div class="p-2.5">
+                                <h3 class="font-medium text-white text-xs leading-tight line-clamp-2 mb-1.5"
+                                    x-text="file.title || file.name.replace('.pkg', '')"></h3>
+                                <div class="flex items-center gap-2 text-[10px] text-gray-500">
+                                    <span x-show="file.workshop_id" x-text="file.workshop_id"></span>
+                                    <span x-show="file.size" class="ml-auto" x-text="formatSize(file.size)"></span>
+                                </div>
+                            </div>
+                        </div>
+                    </template>
+                </div>
+            </div>
+
+            <!-- 视频播放模态框 -->
+            <div x-show="videoModal.show"
+                 x-transition:enter="transition ease-out duration-300"
+                 x-transition:enter-start="opacity-0"
+                 x-transition:enter-end="opacity-100"
+                 x-transition:leave="transition ease-in duration-200"
+                 x-transition:leave-start="opacity-100"
+                 x-transition:leave-end="opacity-0"
+                 class="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm"
+                 @click.self="closeVideoModal()">
+                <div class="glass-panel glass-border rounded-2xl p-6 max-w-4xl w-full mx-4">
+                    <!-- 模态框头部 -->
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-lg font-semibold text-white" x-text="videoModal.title"></h3>
+                        <button @click="closeVideoModal()" class="w-8 h-8 glass-button rounded-lg flex items-center justify-center">
+                            <i class="fas fa-times text-gray-300"></i>
+                        </button>
+                    </div>
+                    <!-- 视频播放器 -->
+                    <div class="relative aspect-video bg-black rounded-xl overflow-hidden">
+                        <video x-show="videoModal.path"
+                               :src="'/api/preview/' + encodeURIComponent(videoModal.path)"
+                               class="w-full h-full"
+                               controls
+                               autoplay
+                               @click.stop>
+                        </video>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 右键菜单 -->
+            <div x-show="contextMenu.show"
+                 :style="`position: fixed; left: ${contextMenu.x}px; top: ${contextMenu.y}px;`"
+                 class="z-50 min-w-[160px] glass-panel glass-border rounded-xl p-1.5 shadow-2xl"
+                 @click.stop>
+                <button @click="contextSelectSingle()"
+                        class="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-gray-300 hover:bg-white/10 transition-colors">
+                    <i class="fas fa-check-square text-blue-400 w-4"></i>选择此项
+                </button>
+                <!-- 输入视图：提取 -->
+                <button x-show="activeView === 'input'"
+                        @click="contextExtractSingle()"
+                        class="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-gray-300 hover:bg-white/10 transition-colors">
+                    <i class="fas fa-play text-green-400 w-4"></i>提取此项
+                </button>
+                <!-- 输出视图：删除 -->
+                <button x-show="activeView === 'output'"
+                        @click="contextDeleteSingle()"
+                        class="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-gray-300 hover:bg-white/10 transition-colors">
+                    <i class="fas fa-trash text-red-400 w-4"></i>删除此项
+                </button>
+                <hr class="border-white/10 my-1">
+                <button @click="contextOpenLocation()"
+                        class="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-gray-300 hover:bg-white/10 transition-colors">
+                    <i class="fas fa-folder-open text-yellow-400 w-4"></i>打开位置
+                </button>
+            </div>
+
+            <!-- 进度条 -->
+            <div x-show="progress.total > 0" class="glass-panel glass-border rounded-xl p-4 mt-6">
+                <div class="flex items-center justify-between mb-3">
+                    <span class="text-sm text-gray-300">
+                        <i class="fas fa-spinner animate-spin mr-2"></i>
+                        处理进度
+                    </span>
+                    <span class="text-sm text-gray-400">
+                        <span x-text="progress.current"></span> / <span x-text="progress.total"></span>
+                    </span>
+                </div>
+                <div class="w-full bg-white/10 rounded-full h-2 overflow-hidden">
+                    <div class="bg-gradient-to-r from-blue-500 to-purple-500 h-2 rounded-full transition-all duration-300"
+                         :style="`width: ${progress.percentage}%`"></div>
+                </div>
+                <p class="text-xs text-gray-500 mt-2 truncate" x-text="progress.current_file"></p>
+            </div>
+
+            <!-- 日志区域 -->
+            <div x-show="logs.length > 0" class="glass-panel glass-border rounded-xl p-4 mt-4">
+                <div class="flex items-center justify-between mb-3">
+                    <span class="text-sm text-gray-300">
+                        <i class="fas fa-terminal mr-2"></i>
+                        运行日志
+                    </span>
+                    <div class="flex gap-2">
+                        <button @click="clearLogs" class="text-xs text-gray-500 hover:text-gray-300">
+                            清空
+                        </button>
+                        <button @click="exportLogs" class="text-xs text-gray-500 hover:text-gray-300">
+                            导出
+                        </button>
+                    </div>
+                </div>
+                <div x-ref="logContainer" class="h-32 overflow-y-auto space-y-1">
+                    <template x-for="(log, index) in logs" :key="index">
+                        <div class="text-xs font-mono flex items-start gap-2">
+                            <span class="text-gray-600 shrink-0" x-text="log.timestamp || ''"></span>
+                            <span :class="{
+                                'text-green-400': log.level === 'success',
+                                'text-red-400': log.level === 'error',
+                                'text-yellow-400': log.level === 'warning',
+                                'text-blue-400': log.level === 'debug',
+                                'text-gray-300': log.level === 'info'
+                            }" x-text="log.message || ''"></span>
+                            <span x-show="log.detail" class="text-gray-600 truncate" x-text="log.detail || ''"></span>
+                        </div>
+                    </template>
+                </div>
+            </div>
+        </main>
+        {% endblock %}
+    </div>
+    </div>
+
+    <!-- 通知组件 -->
+    <div x-data="notificationComponent()"
+         class="fixed top-4 right-4 z-50 space-y-2"
+         @notify.window="show($event.detail)">
+        <template x-for="notification in notifications" :key="notification.id">
+            <div x-show="notification.visible"
+                 class="glass-notification px-4 py-3 rounded-xl shadow-lg text-white flex items-center gap-3 min-w-[300px]"
+                 :class="{
+                     'border-green-500/50': notification.type === 'success',
+                     'border-red-500/50': notification.type === 'error',
+                     'border-yellow-500/50': notification.type === 'warning',
+                     'border-blue-500/50': notification.type === 'info'
+                 }">
+                <i :class="{
+                    'fa-check-circle text-green-400': notification.type === 'success',
+                    'fa-times-circle text-red-400': notification.type === 'error',
+                    'fa-exclamation-triangle text-yellow-400': notification.type === 'warning',
+                    'fa-info-circle text-blue-400': notification.type === 'info'
+                }" class="fas"></i>
+                <span x-text="notification.message" class="flex-1"></span>
+                <button @click="remove(notification.id)" class="text-gray-400 hover:text-white">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+        </template>
+    </div>
+
+    <script>
+        function notificationComponent() {
+            return {
+                notifications: [],
+                idCounter: 0,
+
+                show(detail) {
+                    const notification = {
+                        id: ++this.idCounter,
+                        type: detail.type || 'info',
+                        message: detail.message,
+                        visible: true
+                    };
+                    this.notifications.push(notification);
+
+                    setTimeout(() => {
+                        this.remove(notification.id);
+                    }, detail.duration || 4000);
+                },
+
+                remove(id) {
+                    const index = this.notifications.findIndex(n => n.id === id);
+                    if (index > -1) {
+                        this.notifications[index].visible = false;
+                        setTimeout(() => {
+                            this.notifications = this.notifications.filter(n => n.id !== id);
+                        }, 300);
+                    }
+                }
+            }
+        }
+
+        function notify(message, type = 'info', duration = 4000) {
+            window.dispatchEvent(new CustomEvent('notify', {
+                detail: { message, type, duration }
+            }));
+        }
+    </script>
+
+    {% block extra_scripts %}{% endblock %}
+</body>
+</html>

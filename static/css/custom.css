@@ -1,0 +1,466 @@
+/* 深色液态玻璃风格 - 优化版 */
+
+/* ==================== 核心玻璃效果 ==================== */
+
+/* 液态玻璃面板 - 主容器 */
+.glass-panel {
+    background: linear-gradient(
+        135deg,
+        rgba(30, 41, 59, 0.7) 0%,
+        rgba(30, 41, 59, 0.5) 50%,
+        rgba(30, 41, 59, 0.6) 100%
+    );
+    backdrop-filter: blur(24px) saturate(180%);
+    -webkit-backdrop-filter: blur(24px) saturate(180%);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-top-color: rgba(255, 255, 255, 0.1);
+    border-left-color: rgba(255, 255, 255, 0.08);
+    box-shadow: 
+        0 8px 32px rgba(0, 0, 0, 0.3),
+        0 1px 0 rgba(255, 255, 255, 0.05),
+        inset 0 1px 0 rgba(255, 255, 255, 0.08),
+        inset 0 -1px 0 rgba(0, 0, 0, 0.15);
+}
+
+/* 液态玻璃卡片 - 项目预览 */
+.glass-card {
+    background: linear-gradient(
+        145deg,
+        rgba(30, 41, 59, 0.5) 0%,
+        rgba(30, 41, 59, 0.3) 100%
+    );
+    backdrop-filter: blur(20px) saturate(150%);
+    -webkit-backdrop-filter: blur(20px) saturate(150%);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-top-color: rgba(255, 255, 255, 0.1);
+    box-shadow: 
+        0 4px 16px rgba(0, 0, 0, 0.2),
+        inset 0 1px 0 rgba(255, 255, 255, 0.06);
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.glass-card:hover {
+    background: linear-gradient(
+        145deg,
+        rgba(30, 41, 59, 0.6) 0%,
+        rgba(30, 41, 59, 0.4) 100%
+    );
+    border-color: rgba(255, 255, 255, 0.15);
+    border-top-color: rgba(255, 255, 255, 0.2);
+    box-shadow: 
+        0 8px 32px rgba(0, 0, 0, 0.4),
+        0 0 20px rgba(59, 130, 246, 0.08),
+        inset 0 1px 0 rgba(255, 255, 255, 0.12);
+    transform: translateY(-2px);
+}
+
+/* 玻璃边框 */
+.glass-border {
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-top-color: rgba(255, 255, 255, 0.1);
+    border-radius: 16px;
+}
+
+/* ==================== 按钮效果 ==================== */
+
+/* 液态玻璃按钮 - 通用 */
+.glass-button {
+    background: linear-gradient(
+        135deg,
+        rgba(255, 255, 255, 0.06) 0%,
+        rgba(255, 255, 255, 0.02) 100%
+    );
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-bottom-color: rgba(255, 255, 255, 0.04);
+    box-shadow: 
+        0 1px 2px rgba(0, 0, 0, 0.15),
+        inset 0 1px 0 rgba(255, 255, 255, 0.06);
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.glass-button:hover {
+    background: linear-gradient(
+        135deg,
+        rgba(255, 255, 255, 0.12) 0%,
+        rgba(255, 255, 255, 0.06) 100%
+    );
+    border-color: rgba(255, 255, 255, 0.18);
+    box-shadow: 
+        0 2px 8px rgba(0, 0, 0, 0.2),
+        0 0 12px rgba(59, 130, 246, 0.06),
+        inset 0 1px 0 rgba(255, 255, 255, 0.12);
+}
+
+/* 主要按钮 - 蓝紫渐变 */
+.glass-button-primary {
+    background: linear-gradient(
+        135deg,
+        rgba(59, 130, 246, 0.85) 0%,
+        rgba(147, 51, 234, 0.85) 100%
+    );
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(59, 130, 246, 0.3);
+    border-top-color: rgba(147, 51, 234, 0.4);
+    box-shadow: 
+        0 4px 16px rgba(59, 130, 246, 0.2),
+        0 0 30px rgba(147, 51, 234, 0.05),
+        inset 0 1px 0 rgba(255, 255, 255, 0.15);
+    color: white;
+    transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.glass-button-primary:hover:not(:disabled) {
+    background: linear-gradient(
+        135deg,
+        rgba(59, 130, 246, 1) 0%,
+        rgba(147, 51, 234, 1) 100%
+    );
+    border-color: rgba(147, 51, 234, 0.6);
+    transform: translateY(-1px);
+    box-shadow: 
+        0 6px 24px rgba(59, 130, 246, 0.35),
+        0 0 40px rgba(147, 51, 234, 0.12),
+        inset 0 1px 0 rgba(255, 255, 255, 0.25);
+}
+
+.glass-button-primary:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
+}
+
+/* 危险按钮 - 红色渐变 */
+.glass-button-danger {
+    background: linear-gradient(
+        135deg,
+        rgba(239, 68, 68, 0.85) 0%,
+        rgba(220, 38, 38, 0.85) 100%
+    );
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(239, 68, 68, 0.3);
+    border-top-color: rgba(248, 113, 113, 0.4);
+    box-shadow: 
+        0 4px 16px rgba(239, 68, 68, 0.2),
+        0 0 30px rgba(239, 68, 68, 0.05),
+        inset 0 1px 0 rgba(255, 255, 255, 0.15);
+    color: white;
+    transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.glass-button-danger:hover {
+    background: linear-gradient(
+        135deg,
+        rgba(239, 68, 68, 1) 0%,
+        rgba(220, 38, 38, 1) 100%
+    );
+    border-color: rgba(248, 113, 113, 0.6);
+    transform: translateY(-1px);
+    box-shadow: 
+        0 6px 24px rgba(239, 68, 68, 0.35),
+        inset 0 1px 0 rgba(255, 255, 255, 0.25);
+}
+
+/* ==================== 输入框效果 ==================== */
+
+.glass-input {
+    background: linear-gradient(
+        135deg,
+        rgba(255, 255, 255, 0.04) 0%,
+        rgba(255, 255, 255, 0.02) 100%
+    );
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-bottom-color: rgba(255, 255, 255, 0.04);
+    box-shadow: 
+        inset 0 1px 2px rgba(0, 0, 0, 0.15),
+        0 1px 0 rgba(255, 255, 255, 0.03);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.glass-input:focus {
+    outline: none;
+    border-color: rgba(59, 130, 246, 0.4);
+    border-bottom-color: rgba(59, 130, 246, 0.5);
+    background: linear-gradient(
+        135deg,
+        rgba(255, 255, 255, 0.08) 0%,
+        rgba(255, 255, 255, 0.04) 100%
+    );
+    box-shadow: 
+        0 0 0 3px rgba(59, 130, 246, 0.08),
+        0 0 16px rgba(59, 130, 246, 0.06),
+        inset 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+/* ==================== 复选框效果 ==================== */
+
+.glass-checkbox {
+    background: transparent;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.glass-checkbox:hover {
+    background: linear-gradient(
+        135deg,
+        rgba(255, 255, 255, 0.08) 0%,
+        rgba(255, 255, 255, 0.04) 100%
+    );
+}
+
+/* ==================== 通知效果 ==================== */
+
+/* 分隔线增强 */
+.border-white\/10 {
+    border-color: rgba(255, 255, 255, 0.06) !important;
+}
+
+.glass-notification {
+    background: linear-gradient(
+        135deg,
+        rgba(30, 41, 59, 0.95) 0%,
+        rgba(30, 41, 59, 0.85) 100%
+    );
+    backdrop-filter: blur(24px) saturate(180%);
+    -webkit-backdrop-filter: blur(24px) saturate(180%);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-left-width: 3px;
+    box-shadow: 
+        0 8px 32px rgba(0, 0, 0, 0.4),
+        0 0 20px rgba(59, 130, 246, 0.04),
+        inset 0 1px 0 rgba(255, 255, 255, 0.06);
+    animation: slideIn 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@keyframes slideIn {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+/* ==================== 滚动条 ==================== */
+
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.03);
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+    background: linear-gradient(
+        180deg,
+        rgba(255, 255, 255, 0.2) 0%,
+        rgba(255, 255, 255, 0.1) 100%
+    );
+    border-radius: 4px;
+    border: 2px solid transparent;
+    background-clip: padding-box;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(
+        180deg,
+        rgba(255, 255, 255, 0.3) 0%,
+        rgba(255, 255, 255, 0.15) 100%
+    );
+}
+
+/* ==================== 进度条 ==================== */
+
+.progress-gradient {
+    background: linear-gradient(
+        90deg,
+        rgba(59, 130, 246, 1) 0%,
+        rgba(147, 51, 234, 1) 50%,
+        rgba(59, 130, 246, 1) 100%
+    );
+    background-size: 200% 100%;
+    animation: progressShine 2s linear infinite;
+    box-shadow: 
+        0 0 16px rgba(59, 130, 246, 0.5),
+        0 0 32px rgba(147, 51, 234, 0.3);
+}
+
+@keyframes progressShine {
+    0% {
+        background-position: 0% 0%;
+    }
+    100% {
+        background-position: 200% 0%;
+    }
+}
+
+/* ==================== 动画效果 ==================== */
+
+.animate-pulse {
+    animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+@keyframes pulse {
+    0%, 100% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.5;
+    }
+}
+
+.animate-spin {
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    from {
+        transform: rotate(0deg);
+    }
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* ==================== 文本效果 ==================== */
+
+.line-clamp-2 {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    line-clamp: 2;
+}
+
+/* ==================== 图片效果 ==================== */
+
+.group:hover img {
+    transform: scale(1.05);
+}
+
+/* ==================== 背景装饰 ==================== */
+
+/* 添加微妙的光晕效果 */
+body::before {
+    content: '';
+    position: fixed;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(
+        circle at 30% 30%,
+        rgba(59, 130, 246, 0.03) 0%,
+        transparent 50%
+    ),
+    radial-gradient(
+        circle at 70% 70%,
+        rgba(147, 51, 234, 0.03) 0%,
+        transparent 50%
+    );
+    pointer-events: none;
+    z-index: -1;
+}
+
+/* ==================== 特殊效果 ==================== */
+
+/* 日志面板特殊样式 */
+.log-panel {
+    background: linear-gradient(
+        180deg,
+        rgba(15, 23, 42, 0.8) 0%,
+        rgba(15, 23, 42, 0.6) 100%
+    );
+    border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+/* 状态指示器 */
+.status-indicator {
+    box-shadow: 0 0 8px currentColor;
+}
+
+/* 标签效果 */
+.tag-glass {
+    background: linear-gradient(
+        135deg,
+        rgba(59, 130, 246, 0.2) 0%,
+        rgba(59, 130, 246, 0.1) 100%
+    );
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    border: 1px solid rgba(59, 130, 246, 0.2);
+}
+
+/* ==================== 背景图层 ==================== */
+
+/* 应用背景层 */
+.app-bg-layer {
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    transition: opacity 0.6s ease;
+    pointer-events: none;
+}
+
+/* 无背景图时的默认渐变 */
+body {
+    background: linear-gradient(
+        135deg,
+        #0f172a 0%,
+        #1e293b 50%,
+        #0f172a 100%
+    );
+}
+
+/* ==================== 范围滑块 ==================== */
+
+/* 自定义 range input */
+input[type="range"].glass-slider {
+    -webkit-appearance: none;
+    appearance: none;
+    height: 6px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 3px;
+    outline: none;
+    cursor: pointer;
+}
+
+input[type="range"].glass-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    cursor: pointer;
+    box-shadow: 0 2px 8px rgba(59, 130, 246, 0.4);
+}
+
+/* ==================== 选择状态 ==================== */
+
+.glass-card.selected {
+    /* ring 由 Tailwind ring-2 ring-blue-500/40 处理 */
+}
+
+input[type="range"].glass-slider::-moz-range-thumb {
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    cursor: pointer;
+    box-shadow: 0 2px 8px rgba(59, 130, 246, 0.4);
+}

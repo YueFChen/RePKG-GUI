@@ -1,82 +1,117 @@
 ; ============================================================
-; RePKG-GUI 安装脚本 (installer.iss)
-; 作者: YuefChen
-; 更新: 2025-10-21
-; 功能: 包含 README.md、国际化任务名称、图标、assets 完整资源
+; RePKG-GUI Inno Setup 6 安装脚本
+;
+; 编译: ISCC.exe installer.iss  (Inno Setup >= 6.0)
 ; ============================================================
 
+#define AppName "RePKG-GUI"
+#define AppVersion "1.0.1"
+#define AppPublisher "RePKG-GUI Team"
+#define AppURL "https://github.com/RePKG-GUI"
+#define AppExeName "RePKG-GUI.exe"
+#define SourcePath "dist\" + AppName
+
 [Setup]
-AppId={{8A24C5D1-REPKG-GUI-2025}}
-AppName=RePKG-GUI
-AppVersion=1.0.0
-AppPublisher=YuefChen
-AppPublisherURL=https://github.com/
-DefaultDirName={autopf}\RePKG-GUI
-DefaultGroupName=RePKG-GUI
-OutputDir=Output
-OutputBaseFilename=RePKG-GUI_Setup
-Compression=lzma
+AppId={{B6F2A8D4-3C7E-4F1A-9D2E-6A8B5C0D3E7F}
+AppName={#AppName}
+AppVersion={#AppVersion}
+AppPublisher={#AppPublisher}
+AppPublisherURL={#AppURL}
+AppSupportURL={#AppURL}
+AppUpdatesURL={#AppURL}
+DefaultDirName={autopf64}\{#AppName}
+DefaultGroupName={#AppName}
+AllowNoIcons=yes
+OutputDir=dist
+OutputBaseFilename={#AppName}-Setup-{#AppVersion}
+SetupIconFile=static\assets\images\icon.ico
+Compression=lzma2/ultra64
 SolidCompression=yes
 WizardStyle=modern
-UninstallDisplayIcon={app}\assets\images\icon.ico
-SetupIconFile=assets\images\icon.ico
+UninstallDisplayIcon={app}\static\assets\images\icon.ico
+UninstallDisplayName={#AppName} {#AppVersion}
 PrivilegesRequired=admin
-ArchitecturesInstallIn64BitMode=x64
+ArchitecturesInstallIn64BitMode=x64compatible
+MinVersion=10.0
+DisableProgramGroupPage=yes
 
 [Languages]
 Name: "chinesesimplified"; MessagesFile: "compiler:Languages\ChineseSimplified.isl"
-Name: "english"; MessagesFile: "compiler:Default.isl"
 
 [Tasks]
-; 使用国际化消息引用自定义文本
-Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"; Flags: unchecked
-Name: "startmenu"; Description: "{cm:CreateStartMenuFolder}"; GroupDescription: "{cm:AdditionalIcons}"
+Name: "desktopicon"; Description: "创建桌面快捷方式"; GroupDescription: "附加快捷方式:"
 
 [Files]
-; 主程序与依赖
-Source: "RePKG-GUI.exe"; DestDir: "{app}"; Flags: ignoreversion
-Source: "README.md"; DestDir: "{app}"; Flags: ignoreversion
-Source: "LICENSE"; DestDir: "{app}"; Flags: ignoreversion
-Source: "assets\RePKG.exe"; DestDir: "{app}\assets"; Flags: ignoreversion
-Source: "assets\repkg_config.json"; DestDir: "{app}\assets"; Flags: ignoreversion
-Source: "assets\txt\*"; DestDir: "{app}\assets\txt"; Flags: ignoreversion recursesubdirs
-Source: "assets\images\*"; DestDir: "{app}\assets\images"; Flags: ignoreversion recursesubdirs
+; ---- 主程序 ----
+Source: "{#SourcePath}\{#AppExeName}"; DestDir: "{app}"; Flags: ignoreversion
+
+; ---- 配置文件（首次安装写入，升级/覆盖安装不覆盖已有） ----
+Source: "{#SourcePath}\config.json"; DestDir: "{app}"; Flags: ignoreversion onlyifdoesntexist
+
+; ---- 模板文件 ----
+Source: "{#SourcePath}\templates\base.html";     DestDir: "{app}\templates"; Flags: ignoreversion
+Source: "{#SourcePath}\templates\index.html";    DestDir: "{app}\templates"; Flags: ignoreversion
+Source: "{#SourcePath}\templates\settings.html"; DestDir: "{app}\templates"; Flags: ignoreversion
+
+; ---- 静态资源 ----
+Source: "{#SourcePath}\static\css\custom.css"; DestDir: "{app}\static\css"; Flags: ignoreversion
+Source: "{#SourcePath}\static\js\app.js";       DestDir: "{app}\static\js";  Flags: ignoreversion
+
+; ---- 资源文件 ----
+Source: "{#SourcePath}\static\assets\RePKG.exe";                        DestDir: "{app}\static\assets";         Flags: ignoreversion
+Source: "{#SourcePath}\static\assets\images\icon.ico";                  DestDir: "{app}\static\assets\images"; Flags: ignoreversion
+Source: "{#SourcePath}\static\assets\images\background\*";              DestDir: "{app}\static\assets\images\background"; Flags: ignoreversion
 
 [Icons]
-; 桌面快捷方式
-Name: "{commondesktop}\RePKG-GUI"; Filename: "{app}\RePKG-GUI.exe"; IconFilename: "{app}\assets\images\icon.ico"; Tasks: desktopicon
-; 开始菜单程序入口
-Name: "{group}\RePKG-GUI"; Filename: "{app}\RePKG-GUI.exe"; IconFilename: "{app}\assets\images\icon.ico"; Tasks: startmenu
-; README 打开快捷方式
-Name: "{group}\查看使用说明 (README)"; Filename: "notepad.exe"; Parameters: """{app}\README.md"""; Tasks: startmenu
-; 卸载图标
-Name: "{group}\卸载 RePKG-GUI"; Filename: "{uninstallexe}"
+Name: "{autoprograms}\{#AppName}"; Filename: "{app}\{#AppExeName}"
+Name: "{autodesktop}\{#AppName}";  Filename: "{app}\{#AppExeName}"; Tasks: desktopicon
 
 [Run]
-Filename: "{app}\RePKG-GUI.exe"; Description: "{cm:LaunchProgram,RePKG-GUI}"; Flags: nowait postinstall skipifsilent
-
-[UninstallDelete]
-Type: filesandordirs; Name: "{app}\temp"
-Type: filesandordirs; Name: "{app}\logs"
-
-; ========================
-; 国际化自定义消息定义
-; ========================
-[CustomMessages]
-; --- 中文（简体） ---
-chinesesimplified.CreateStartMenuFolder=创建开始菜单文件夹
-chinesesimplified.CreateDesktopIcon=创建桌面快捷方式
-chinesesimplified.AdditionalIcons=附加图标
-chinesesimplified.AppInfo=RePKG-GUI 是一款基于 RePKG 的图形界面工具，由 YuefChen 开发。
-
-; --- 英文 ---
-english.CreateStartMenuFolder=Create Start Menu Folder
-english.CreateDesktopIcon=Create Desktop Icon
-english.AdditionalIcons=Additional Icons
-english.AppInfo=RePKG-GUI is a graphical interface for RePKG, developed by YuefChen.
+Filename: "{app}\{#AppExeName}"; Description: "启动 {#AppName}"; Flags: nowait postinstall skipifsilent
 
 [Code]
-procedure InitializeWizard;
+// 安装前检查已有安装
+function InitializeSetup: Boolean;
+var
+  UninstPath: string;
+  ResultCode: Integer;
 begin
-  MsgBox(ExpandConstant('{cm:AppInfo}'), mbInformation, MB_OK);
+  Result := True;
+  if RegQueryStringValue(HKLM64, 'SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\{#AppName}_is1',
+    'UninstallString', UninstPath) then
+  begin
+    if MsgBox('检测到 {#AppName} 已安装。' + #13#10#13#10 +
+              '点击"是"将先卸载旧版本（保留用户数据），然后继续安装。' + #13#10 +
+              '点击"否"取消安装。', mbConfirmation, MB_YESNO) = IDYES then
+    begin
+      Exec(RemoveQuotes(UninstPath), '/VERYSILENT /NORESTART', '', SW_SHOW,
+        ewWaitUntilTerminated, ResultCode);
+    end
+    else
+      Result := False;
+  end;
+end;
+
+// 卸载前备份用户数据到临时目录，卸载后恢复
+procedure CurUninstallStepChanged(CurUninstallStep: TUninstallStep);
+var
+  ConfigBak: string;
+begin
+  ConfigBak := ExpandConstant('{tmp}\RePKG-GUI-config.json');
+
+  if CurUninstallStep = usUninstall then
+  begin
+    // 备份用户配置到临时目录
+    if FileExists(ExpandConstant('{app}\config.json')) then
+      FileCopy(ExpandConstant('{app}\config.json'), ConfigBak, False);
+  end;
+
+  if CurUninstallStep = usPostUninstall then
+  begin
+    if FileExists(ConfigBak) then
+    begin
+      CreateDir(ExpandConstant('{app}'));
+      RenameFile(ConfigBak, ExpandConstant('{app}\config.json'));
+    end;
+  end;
 end;

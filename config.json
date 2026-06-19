@@ -1,0 +1,19 @@
+{
+    "user": {
+        "inputPath": "E:\\Software\\Steam\\steamapps\\workshop\\content\\",
+        "outputPath": "E:\\Software\\Steam\\steamapps\\common\\wallpaper_engine\\projects\\myprojects",
+        "repkgPath": "./static/assets/RePKG.exe",
+        "options": {
+            "convertTex": true,
+            "copyProject": true,
+            "overwrite": false,
+            "recursive": true,
+            "copyPreview": true
+        },
+        "appearance": {
+            "backgroundImage": "126424846_p0-🗝Enchantment🗝.png",
+            "backgroundOpacity": 1,
+            "backgroundBlur": 0
+        }
+    }
+}

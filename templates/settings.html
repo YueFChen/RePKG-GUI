@@ -1,0 +1,375 @@
+{% extends "base.html" %}
+
+{% block title %}RePKG-GUI - 设置{% endblock %}
+
+{% block extra_head %}
+<script src="{{ url_for('static', filename='js/app.js') }}"></script>
+{% endblock %}
+
+{% block main_content %}
+<main class="flex-1 flex flex-col overflow-hidden p-6">
+
+    <!-- 顶部导航 -->
+    <header class="glass-panel glass-border rounded-xl p-4 mb-6 flex items-center justify-between">
+        <div class="flex items-center gap-4">
+            <a href="/" class="w-9 h-9 glass-button rounded-xl flex items-center justify-center">
+                <i class="fas fa-arrow-left text-gray-300"></i>
+            </a>
+            <h2 class="text-lg font-semibold text-white">
+                <i class="fas fa-cog mr-2 text-blue-400"></i>设置
+            </h2>
+        </div>
+        <div class="flex items-center gap-3">
+            <button @click="loadConfig().then(() => notify('配置已重新加载', 'success'))"
+                    class="glass-button px-3 py-1.5 rounded-lg flex items-center gap-2 text-sm text-gray-300 hover:text-white">
+                <i class="fas fa-undo-alt"></i>
+                <span>重置</span>
+            </button>
+            <button @click="saveConfig().then(() => notify('配置已保存', 'success'))"
+                    class="glass-button-primary px-4 py-1.5 rounded-lg flex items-center gap-2 text-sm">
+                <i class="fas fa-save"></i>
+                <span>保存</span>
+            </button>
+        </div>
+    </header>
+
+    <!-- 隐藏的选择器 -->
+    <input type="file" id="repkgFilePicker" accept=".exe" style="display: none;" @change="handleRepkgFileSelect">
+    <input type="file" id="dirPicker" webkitdirectory multiple style="display: none;" @change="handleDirSelect">
+
+    <!-- 设置内容 -->
+    <div class="flex-1 overflow-y-auto space-y-6">
+
+        <!-- ====== 1. 工作路径 ====== -->
+        <section class="glass-panel glass-border rounded-xl p-6">
+            <div class="flex items-center justify-between mb-5">
+                <div class="flex items-center gap-2">
+                    <i class="fas fa-folder-tree text-blue-400"></i>
+                    <h3 class="text-sm font-semibold text-gray-300">工作路径</h3>
+                </div>
+                <div class="flex items-center gap-2 text-xs text-gray-600">
+                    <span class="px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-400 border border-blue-500/20">用户路径</span>
+                    <span>为空时自动使用</span>
+                    <span class="px-2 py-0.5 rounded-full bg-green-500/10 text-green-400 border border-green-500/20">Steam 检测</span>
+                </div>
+            </div>
+
+            <!-- 输入目录 -->
+            <div class="glass-card rounded-xl p-4 mb-3">
+                <div class="flex items-start gap-4">
+                    <div class="w-9 h-9 rounded-xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center shrink-0 mt-1">
+                        <i class="fas fa-folder-open text-blue-400 text-sm"></i>
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <label class="block text-sm font-medium text-gray-300 mb-2">输入目录</label>
+                        <div class="flex gap-2">
+                            <input type="text" x-model="config.inputPath" @change="saveConfig()"
+                                   class="glass-input flex-1 px-4 py-2 rounded-xl text-white placeholder-gray-500 font-mono text-xs"
+                                   placeholder="留空则自动使用下方 Steam 路径">
+                            <button @click="browseDirectory('input')"
+                                    class="glass-button w-10 h-10 rounded-xl flex items-center justify-center text-gray-300 hover:text-white shrink-0">
+                                <i class="fas fa-ellipsis-h"></i>
+                            </button>
+                        </div>
+                        <!-- Steam 检测路径 -->
+                        <div class="mt-2 flex items-center gap-2">
+                            <i class="fab fa-steam text-gray-600 text-xs shrink-0"></i>
+                            <span class="text-xs text-gray-500 truncate"
+                                  x-text="steamConfig.inputPath || 'Steam 路径未检测到'"></span>
+                            <button x-show="steamConfig.inputPath && config.inputPath !== steamConfig.inputPath"
+                                    @click="config.inputPath = steamConfig.inputPath; saveConfig()"
+                                    class="text-xs px-2 py-0.5 rounded-lg bg-blue-500/10 text-blue-400 hover:bg-blue-500/20 border border-blue-500/20 whitespace-nowrap shrink-0">
+                                使用
+                            </button>
+                            <span x-show="steamConfig.inputPath && config.inputPath === steamConfig.inputPath"
+                                  class="text-xs px-2 py-0.5 rounded-lg bg-blue-500/20 text-blue-300 whitespace-nowrap shrink-0">
+                                ✓ 当前使用
+                            </span>
+                        </div>
+                    </div>
+                    <!-- 来源标签 -->
+                    <div class="shrink-0 pt-1">
+                        <span x-show="config.inputPath"
+                              class="text-xs px-2 py-1 rounded-full bg-blue-500/10 text-blue-400 border border-blue-500/20">
+                            用户设置
+                        </span>
+                        <span x-show="!config.inputPath && steamConfig.inputPath"
+                              class="text-xs px-2 py-1 rounded-full bg-green-500/10 text-green-400 border border-green-500/20">
+                            Steam
+                        </span>
+                        <span x-show="!config.inputPath && !steamConfig.inputPath"
+                              class="text-xs px-2 py-1 rounded-full bg-red-500/10 text-red-400 border border-red-500/20">
+                            未设置
+                        </span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 输出目录 -->
+            <div class="glass-card rounded-xl p-4">
+                <div class="flex items-start gap-4">
+                    <div class="w-9 h-9 rounded-xl bg-green-500/10 border border-green-500/20 flex items-center justify-center shrink-0 mt-1">
+                        <i class="fas fa-download text-green-400 text-sm"></i>
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <label class="block text-sm font-medium text-gray-300 mb-2">输出目录</label>
+                        <div class="flex gap-2">
+                            <input type="text" x-model="config.outputPath" @change="saveConfig()"
+                                   class="glass-input flex-1 px-4 py-2 rounded-xl text-white placeholder-gray-500 font-mono text-xs"
+                                   placeholder="留空则自动使用下方 Steam 路径">
+                            <button @click="browseDirectory('output')"
+                                    class="glass-button w-10 h-10 rounded-xl flex items-center justify-center text-gray-300 hover:text-white shrink-0">
+                                <i class="fas fa-ellipsis-h"></i>
+                            </button>
+                        </div>
+                        <!-- Steam 检测路径 -->
+                        <div class="mt-2 flex items-center gap-2">
+                            <i class="fab fa-steam text-gray-600 text-xs shrink-0"></i>
+                            <span class="text-xs text-gray-500 truncate"
+                                  x-text="steamConfig.outputPath || 'Steam 路径未检测到'"></span>
+                            <button x-show="steamConfig.outputPath && config.outputPath !== steamConfig.outputPath"
+                                    @click="config.outputPath = steamConfig.outputPath; saveConfig()"
+                                    class="text-xs px-2 py-0.5 rounded-lg bg-blue-500/10 text-blue-400 hover:bg-blue-500/20 border border-blue-500/20 whitespace-nowrap shrink-0">
+                                使用
+                            </button>
+                            <span x-show="steamConfig.outputPath && config.outputPath === steamConfig.outputPath"
+                                  class="text-xs px-2 py-0.5 rounded-lg bg-blue-500/20 text-blue-300 whitespace-nowrap shrink-0">
+                                ✓ 当前使用
+                            </span>
+                        </div>
+                    </div>
+                    <!-- 来源标签 -->
+                    <div class="shrink-0 pt-1">
+                        <span x-show="config.outputPath"
+                              class="text-xs px-2 py-1 rounded-full bg-blue-500/10 text-blue-400 border border-blue-500/20">
+                            用户设置
+                        </span>
+                        <span x-show="!config.outputPath && steamConfig.outputPath"
+                              class="text-xs px-2 py-1 rounded-full bg-green-500/10 text-green-400 border border-green-500/20">
+                            Steam
+                        </span>
+                        <span x-show="!config.outputPath && !steamConfig.outputPath"
+                              class="text-xs px-2 py-1 rounded-full bg-red-500/10 text-red-400 border border-red-500/20">
+                            未设置
+                        </span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 重新检测 Steam -->
+            <div class="mt-3 flex items-center justify-between">
+                <button @click="detectSteamPaths().then(() => notify('Steam 路径检测完成', 'success'))"
+                        class="text-xs text-gray-600 hover:text-gray-400 flex items-center gap-1.5">
+                    <i class="fas fa-sync-alt text-[10px]"></i>重新检测 Steam 路径
+                </button>
+                <span class="text-xs text-gray-700">Steam 检测不保存到配置文件</span>
+            </div>
+        </section>
+
+        <!-- ====== 2. 提取设置 ====== -->
+        <section class="glass-panel glass-border rounded-xl p-6">
+            <div class="flex items-center gap-2 mb-5">
+                <i class="fas fa-sliders-h text-purple-400"></i>
+                <h3 class="text-sm font-semibold text-gray-300">提取设置</h3>
+            </div>
+
+            <!-- RePKG 路径 -->
+            <div class="glass-card rounded-xl p-4 mb-5">
+                <div class="flex items-start gap-4">
+                    <div class="w-9 h-9 rounded-xl bg-purple-500/10 border border-purple-500/20 flex items-center justify-center shrink-0 mt-1">
+                        <i class="fas fa-file-code text-purple-400 text-sm"></i>
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <label class="block text-sm font-medium text-gray-300 mb-2">
+                            RePKG.exe 位置
+                            <span class="text-xs text-gray-600 ml-2">默认使用项目内置版本</span>
+                        </label>
+                        <div class="flex gap-2">
+                            <input type="text" x-model="config.repkgPath" @change="saveConfig()"
+                                   class="glass-input flex-1 px-4 py-2 rounded-xl text-white placeholder-gray-500 font-mono text-xs"
+                                   placeholder="./static/assets/RePKG.exe">
+                            <button @click="pickRepkgFile()"
+                                    class="glass-button w-10 h-10 rounded-xl flex items-center justify-center text-gray-300 hover:text-white shrink-0">
+                                <i class="fas fa-ellipsis-h"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 提取选项网格 -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
+                <label class="glass-checkbox flex items-center gap-2 cursor-pointer p-2 rounded-lg">
+                    <input type="checkbox" x-model="config.options.convertTex" @change="saveConfig()" class="hidden">
+                    <div class="w-4 h-4 rounded border border-white/20 flex items-center justify-center shrink-0"
+                         :class="config.options.convertTex ? 'bg-blue-500 border-blue-500' : 'bg-transparent'">
+                        <i x-show="config.options.convertTex" class="fas fa-check text-white text-[8px]"></i>
+                    </div>
+                    <div class="min-w-0">
+                        <span class="text-xs text-gray-300">转换 TEX</span>
+                        <p class="text-[10px] text-gray-600">TEX → PNG</p>
+                    </div>
+                </label>
+
+                <label class="glass-checkbox flex items-center gap-2 cursor-pointer p-2 rounded-lg">
+                    <input type="checkbox" x-model="config.options.copyProject" @change="saveConfig()" class="hidden">
+                    <div class="w-4 h-4 rounded border border-white/20 flex items-center justify-center shrink-0"
+                         :class="config.options.copyProject ? 'bg-blue-500 border-blue-500' : 'bg-transparent'">
+                        <i x-show="config.options.copyProject" class="fas fa-check text-white text-[8px]"></i>
+                    </div>
+                    <div class="min-w-0">
+                        <span class="text-xs text-gray-300">复制项目文件</span>
+                        <p class="text-[10px] text-gray-600">project.json + preview.jpg</p>
+                    </div>
+                </label>
+
+                <label class="glass-checkbox flex items-center gap-2 cursor-pointer p-2 rounded-lg">
+                    <input type="checkbox" x-model="config.options.recursive" @change="saveConfig()" class="hidden">
+                    <div class="w-4 h-4 rounded border border-white/20 flex items-center justify-center shrink-0"
+                         :class="config.options.recursive ? 'bg-blue-500 border-blue-500' : 'bg-transparent'">
+                        <i x-show="config.options.recursive" class="fas fa-check text-white text-[8px]"></i>
+                    </div>
+                    <div class="min-w-0">
+                        <span class="text-xs text-gray-300">递归搜索</span>
+                        <p class="text-[10px] text-gray-600">搜索所有子目录</p>
+                    </div>
+                </label>
+
+                <label class="glass-checkbox flex items-center gap-2 cursor-pointer p-2 rounded-lg">
+                    <input type="checkbox" x-model="config.options.overwrite" @change="saveConfig()" class="hidden">
+                    <div class="w-4 h-4 rounded border border-white/20 flex items-center justify-center shrink-0"
+                         :class="config.options.overwrite ? 'bg-blue-500 border-blue-500' : 'bg-transparent'">
+                        <i x-show="config.options.overwrite" class="fas fa-check text-white text-[8px]"></i>
+                    </div>
+                    <div class="min-w-0">
+                        <span class="text-xs text-gray-300">覆盖现有文件</span>
+                        <p class="text-[10px] text-gray-600">覆盖已有文件</p>
+                    </div>
+                </label>
+
+                <label class="glass-checkbox flex items-center gap-2 cursor-pointer p-2 rounded-lg">
+                    <input type="checkbox" x-model="config.options.copyPreview" @change="saveConfig()" class="hidden">
+                    <div class="w-4 h-4 rounded border border-white/20 flex items-center justify-center shrink-0"
+                         :class="config.options.copyPreview ? 'bg-blue-500 border-blue-500' : 'bg-transparent'">
+                        <i x-show="config.options.copyPreview" class="fas fa-check text-white text-[8px]"></i>
+                    </div>
+                    <div class="min-w-0">
+                        <span class="text-xs text-gray-300">拷贝预览图</span>
+                        <p class="text-[10px] text-gray-600">gif / webp / png</p>
+                    </div>
+                </label>
+            </div>
+        </section>
+
+        <!-- ====== 3. 外观设置 ====== -->
+        <section class="glass-panel glass-border rounded-xl p-6">
+            <div class="flex items-center justify-between mb-5">
+                <div class="flex items-center gap-2">
+                    <i class="fas fa-paint-brush text-pink-400"></i>
+                    <h3 class="text-sm font-semibold text-gray-300">外观设置</h3>
+                </div>
+                <div class="flex items-center gap-2">
+                    <!-- 上传按钮 -->
+                    <button @click="pickBackgroundImage()"
+                            class="glass-button px-3 py-1.5 rounded-lg flex items-center gap-1.5 text-xs text-gray-300 hover:text-white">
+                        <i class="fas fa-upload"></i>上传
+                    </button>
+                    <!-- 清除按钮 -->
+                    <button x-show="config.appearance.backgroundImage"
+                            @click="clearBackgroundImage()"
+                            class="glass-button px-3 py-1.5 rounded-lg flex items-center gap-1.5 text-xs text-red-400 hover:text-red-300">
+                        <i class="fas fa-times"></i>清除
+                    </button>
+                </div>
+            </div>
+
+            <!-- 背景图片画廊 -->
+            <div class="mb-4">
+                <p class="text-xs text-gray-500 mb-3">
+                    <span class="px-1.5 py-0.5 rounded bg-green-500/10 text-green-400 text-[11px] border border-green-500/20">存储位置</span>
+                    <span class="text-gray-600 ml-1">static/assets/images/background/</span>
+                    <span class="text-gray-600 ml-2">点击图片应用背景</span>
+                </p>
+
+                <template x-if="backgrounds.length === 0">
+                    <div class="glass-card rounded-xl p-6 text-center">
+                        <i class="fas fa-images text-gray-600 text-2xl mb-2 block"></i>
+                        <p class="text-sm text-gray-500">暂无背景图片</p>
+                        <p class="text-xs text-gray-600 mt-1">点击「上传」添加背景图片</p>
+                    </div>
+                </template>
+
+                <div x-show="backgrounds.length > 0" class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-2">
+                    <template x-for="bg in backgrounds" :key="bg.filename">
+                        <div class="glass-card rounded-xl overflow-hidden group cursor-pointer transition-all"
+                             :class="config.appearance.backgroundImage === bg.filename ? 'ring-2 ring-blue-500' : ''"
+                             @click="selectBackground(bg.filename)">
+                            <!-- 缩略图 -->
+                            <div class="relative aspect-square bg-gray-900 overflow-hidden">
+                                <img :src="bg.url"
+                                     class="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                                     @error="$el.src=''; $el.alt='加载失败'">
+                                <!-- 删除按钮 -->
+                                <button @click.stop="deleteBackgroundFile(bg.filename)"
+                                        class="absolute top-1 right-1 w-6 h-6 rounded-lg bg-red-500/80 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                                        title="删除">
+                                    <i class="fas fa-trash text-white text-[10px]"></i>
+                                </button>
+                                <!-- 选中标记 -->
+                                <div x-show="config.appearance.backgroundImage === bg.filename"
+                                     class="absolute inset-0 bg-blue-500/20 flex items-center justify-center">
+                                    <div class="w-8 h-8 rounded-full bg-blue-500 flex items-center justify-center">
+                                        <i class="fas fa-check text-white text-sm"></i>
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- 文件名 -->
+                            <div class="p-2">
+                                <p class="text-xs text-gray-400 truncate" x-text="bg.filename"></p>
+                            </div>
+                        </div>
+                    </template>
+                </div>
+            </div>
+
+            <!-- 透明度 & 模糊 -->
+            <div class="grid grid-cols-2 gap-4">
+                <div class="glass-card rounded-xl p-4">
+                    <div class="flex items-center justify-between mb-2">
+                        <label class="text-xs text-gray-400">不透明度</label>
+                        <span class="text-xs text-white font-mono"
+                              x-text="Math.round(config.appearance.backgroundOpacity * 100) + '%'">15%</span>
+                    </div>
+                    <input type="range" min="0" max="1" step="0.05"
+                           x-model.number="config.appearance.backgroundOpacity"
+                           @change="saveConfig()"
+                           class="glass-slider w-full">
+                    <div class="flex justify-between text-[10px] text-gray-600 mt-1">
+                        <span>0%</span>
+                        <span>50%</span>
+                        <span>100%</span>
+                    </div>
+                </div>
+
+                <div class="glass-card rounded-xl p-4">
+                    <div class="flex items-center justify-between mb-2">
+                        <label class="text-xs text-gray-400">模糊程度</label>
+                        <span class="text-xs text-white font-mono"
+                              x-text="config.appearance.backgroundBlur + 'px'">0px</span>
+                    </div>
+                    <input type="range" min="0" max="20" step="1"
+                           x-model.number="config.appearance.backgroundBlur"
+                           @change="saveConfig()"
+                           class="glass-slider w-full">
+                    <div class="flex justify-between text-[10px] text-gray-600 mt-1">
+                        <span>0px</span>
+                        <span>10px</span>
+                        <span>20px</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </div>
+</main>
+{% endblock %}
